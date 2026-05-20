@@ -29,7 +29,7 @@ DiME/
 Create a Python environment:
 
 ```bash
-conda create -n dime python=3.8 -y
+conda create -n dime python=3.10 -y
 conda activate dime
 ```
 
@@ -61,13 +61,7 @@ The `Dataset/` directory is ignored by Git and will not be uploaded to GitHub.
 
 ## Training
 
-### Baseline Transformer
-
-```bash
-bash scripts/train_scripts/baseline/transformer/run_mmcsd.sh
-```
-
-### IMoE / DiME Transformer
+### DiME Transformer
 
 ```bash
 bash scripts/train_scripts/imoe/transformer/run_mmcsd.sh
