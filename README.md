@@ -14,11 +14,11 @@ DiME/
 │       ├── baseline/
 │       │   └── transformer/    # Training scripts for baseline Transformer models
 │       └── dime/
-│           └── transformer/    # Training scripts for DiME / DiME models
+│           └── transformer/    # Training scripts for DiME models
 ├── src/
 │   ├── baseline/               # Baseline training code
 │   ├── common/                 # Shared datasets, modules, fusion models, and utilities
-│   └── dime/                   # Interaction MoE / DiME model implementation
+│   └── dime/                   # DiME model implementation
 ├── output.py                   # Output or evaluation related script
 ├── requirements.txt            # Python dependencies
 └── .gitignore
@@ -78,8 +78,8 @@ Before running experiments, please check and update the dataset paths, output pa
 ## Main Files
 
 - `src/baseline/train_transformer.py`: training entry for the baseline Transformer model.
-- `src/dime/train_transformer.py`: training entry for the DiME / DiME model.
-- `src/dime/DiME.py`: implementation of the interaction mixture-of-experts module.
+- `src/dime/train_transformer.py`: training entry for the DiME model.
+- `src/dime/dime_model.py`: implementation of the DiME (interaction mixture-of-experts) module.
 - `src/common/datasets/`: dataset loading and preprocessing modules.
 - `src/common/modules/`: shared neural network modules.
 - `src/common/fusion_models/transformer.py`: Transformer-based multimodal fusion model.
