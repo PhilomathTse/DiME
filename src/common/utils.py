@@ -399,7 +399,7 @@ def visualize_expert_logits_simple_weight(
 
 
 def visualize_sample_weights(
-    all_routing_weights, args, framework="imoe", fusion="moepp"
+    all_routing_weights, args, framework="dime", fusion="moepp"
 ):
     """
     Create a violin plot to visualize weights for each sample.
@@ -525,7 +525,7 @@ def visualize_sample_weights(
 
 
 def visualize_expert_logits_distribution(
-    all_expert_outputs, args, framework="imoe", fusion="moepp"
+    all_expert_outputs, args, framework="dime", fusion="moepp"
 ):
     """
     Plot the distribution of logits for each interaction expert and each class.
@@ -582,7 +582,7 @@ def visualize_expert_logits_distribution(
 
 
 def visualize_sample_weights_synergy_redundancy_only(
-    all_routing_weights, args, framework="imoe", fusion="moepp"
+    all_routing_weights, args, framework="dime", fusion="moepp"
 ):
     """
     Create a stacked bar plot to visualize weights for each sample for ablation.

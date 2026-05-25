@@ -20,7 +20,7 @@ for num_heads in 4
 do
 for seed in 3047
 do
-CUDA_VISIBLE_DEVICES=$device python src/imoe/train_transformer.py \
+CUDA_VISIBLE_DEVICES=$device python src/dime/train_transformer.py \
     --original_target=$original_target \
     --temperature_rw $temperature_rw \
     --hidden_dim_rw  $hidden_dim_rw \

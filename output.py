@@ -15,8 +15,8 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 
 # === 你已有的 MoE 与公共模块 ===
-# TODO: 把下面这一行改成你工程里 InteractionMoE 的真实路径
-from src.imoe.InteractionMoE import InteractionMoE
+# TODO: 把下面这一行改成你工程里 DiME 的真实路径
+from src.dime.dime_model import DiME
 
 from transformers import AutoTokenizer, BertModel, CLIPModel
 
@@ -348,7 +348,7 @@ def alias_classifier_to_head(moe_sd, d_model, num_experts, num_modalities=2):
 # ====== 主流程 ======
 def main():
     ap = argparse.ArgumentParser("Per-expert heatmaps with transformer fusion (auto-reconstruct)")
-    ap.add_argument("--ckpt",type=str, default="/home/zbw/project/SILO-MM/I2MoE-main/saves/imoe/transformer/mmcsd/JB_CLIP_prompt_NoSyn_NoRdn_seed_1_modality_TS_train_epochs_80_val_f1_0.79.pth")
+    ap.add_argument("--ckpt",type=str, default="./saves/dime/transformer/mmcsd/JB_CLIP_prompt_NoSyn_NoRdn_seed_1_modality_TS_train_epochs_80_val_f1_0.79.pth")
     ap.add_argument("--image", type=str,default="/home/zbw/project/SILO-MM/I2MoE-main/1311025564149403649_0.jpg")
     ap.add_argument("--tweet",type=str, default="""Joe Biden says he is super ready for tonight's Presidential Debate. debate2020 2020debate trumpbidendebate presidentialdebate presidentialdebate2020 """)
     ap.add_argument("--cot", default="""The provided sentence, "Joe Biden says he is super ready for tonight's Presidential Debate. #debate2020 #2020debate #trumpbidendebate #presidentialdebate #presidentialdebate2020," expresses a confident and positive attitude towards Joe Biden in relation to the topic of his preparedness for the Presidential Debate. The phrase "super ready" suggests a high level of confidence and readiness.
@@ -402,7 +402,7 @@ Remember, this analysis is purely based on the contents of the text and the imag
         seq_len=hp["seq_len"],
         num_classes=hp["num_classes"],
     )
-    moe = InteractionMoE(
+    moe = DiME(
         num_modalities=2,
         fusion_model=fusion,
         fusion_sparse=True,

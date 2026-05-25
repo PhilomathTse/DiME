@@ -13,12 +13,12 @@ DiME/
 │   └── train_scripts/
 │       ├── baseline/
 │       │   └── transformer/    # Training scripts for baseline Transformer models
-│       └── imoe/
-│           └── transformer/    # Training scripts for IMoE / DiME models
+│       └── dime/
+│           └── transformer/    # Training scripts for DiME / DiME models
 ├── src/
 │   ├── baseline/               # Baseline training code
 │   ├── common/                 # Shared datasets, modules, fusion models, and utilities
-│   └── imoe/                   # Interaction MoE / DiME model implementation
+│   └── dime/                   # Interaction MoE / DiME model implementation
 ├── output.py                   # Output or evaluation related script
 ├── requirements.txt            # Python dependencies
 └── .gitignore
@@ -64,13 +64,13 @@ The `Dataset/` directory is ignored by Git and will not be uploaded to GitHub.
 ### DiME Transformer
 
 ```bash
-bash scripts/train_scripts/imoe/transformer/run_mmcsd.sh
+bash scripts/train_scripts/dime/transformer/run_mmcsd.sh
 ```
 
 or:
 
 ```bash
-bash scripts/train_scripts/imoe/transformer/run_mmcsd_2.sh
+bash scripts/train_scripts/dime/transformer/run_mmcsd_2.sh
 ```
 
 Before running experiments, please check and update the dataset paths, output paths, and GPU settings in the shell scripts.
@@ -78,8 +78,8 @@ Before running experiments, please check and update the dataset paths, output pa
 ## Main Files
 
 - `src/baseline/train_transformer.py`: training entry for the baseline Transformer model.
-- `src/imoe/train_transformer.py`: training entry for the IMoE / DiME model.
-- `src/imoe/InteractionMoE.py`: implementation of the interaction mixture-of-experts module.
+- `src/dime/train_transformer.py`: training entry for the DiME / DiME model.
+- `src/dime/DiME.py`: implementation of the interaction mixture-of-experts module.
 - `src/common/datasets/`: dataset loading and preprocessing modules.
 - `src/common/modules/`: shared neural network modules.
 - `src/common/fusion_models/transformer.py`: Transformer-based multimodal fusion model.

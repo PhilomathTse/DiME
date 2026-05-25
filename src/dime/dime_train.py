@@ -22,7 +22,7 @@ from src.common.utils import (
     set_style,
 )
 
-from src.imoe.InteractionMoE import InteractionMoE
+from src.dime.dime_model import DiME
 
 set_style()
 
@@ -110,7 +110,7 @@ def _safe_multiclass_auc(all_labels, all_probs, n_labels):
         return 0.0
 
 
-def train_and_evaluate_imoe(args, seed, fusion_model, fusion):
+def train_and_evaluate_dime(args, seed, fusion_model, fusion):
     """
     Train and evaluate Interaction-MoE on MMCSD only.
 
@@ -172,7 +172,7 @@ def train_and_evaluate_imoe(args, seed, fusion_model, fusion):
         dataset=args.data,
     )
 
-    ensemble_model = InteractionMoE(
+    ensemble_model = DiME(
         num_modalities=num_modalities,
         fusion_model=deepcopy(fusion_model),
         fusion_sparse=args.fusion_sparse,
@@ -426,23 +426,23 @@ def train_and_evaluate_imoe(args, seed, fusion_model, fusion):
     plot_total_loss_curves(
         args,
         plotting_total_losses=plotting_total_losses,
-        framework="imoe",
+        framework="dime",
         fusion=fusion,
     )
 
     plot_interaction_loss_curves(
         args,
         plotting_interaction_losses=plotting_interaction_losses,
-        framework="imoe",
+        framework="dime",
         fusion=fusion,
     )
 
     if args.save:
         Path("./saves").mkdir(exist_ok=True, parents=True)
-        Path(f"./saves/imoe/{fusion}/{args.data}").mkdir(exist_ok=True, parents=True)
+        Path(f"./saves/dime/{fusion}/{args.data}").mkdir(exist_ok=True, parents=True)
 
         save_path = (
-            f"./saves/imoe/{fusion}/{args.data}/"
+            f"./saves/dime/{fusion}/{args.data}/"
             f"{args.target}_seed_{seed}_modality_{args.modality}_"
             f"train_epochs_{args.train_epochs}_val_f1_{best_val_f1:.2f}.pth"
         )
@@ -526,21 +526,21 @@ def train_and_evaluate_imoe(args, seed, fusion_model, fusion):
         routing_weights,
         outputs,
         args,
-        framework="imoe",
+        framework="dime",
         fusion=fusion,
     )
 
     visualize_expert_logits_distribution(
         all_expert_outputs,
         args,
-        framework="imoe",
+        framework="dime",
         fusion=fusion,
     )
 
     visualize_sample_weights(
         all_routing_weights,
         args,
-        framework="imoe",
+        framework="dime",
         fusion=fusion,
     )
 
@@ -551,7 +551,7 @@ def train_and_evaluate_imoe(args, seed, fusion_model, fusion):
 
     now = datetime.now()
     save_dir = Path(
-        f"./outputs/imoe/{fusion}/{args.data}_{now.strftime('%Y-%m-%d_%H:%M:%S')}"
+        f"./outputs/dime/{fusion}/{args.data}_{now.strftime('%Y-%m-%d_%H:%M:%S')}"
     )
     save_dir.mkdir(exist_ok=True, parents=True)
 

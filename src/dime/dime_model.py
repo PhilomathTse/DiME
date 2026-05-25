@@ -167,7 +167,7 @@ class InteractionExpert(nn.Module):
             return outputs
 
 
-class InteractionMoE(nn.Module):
+class DiME(nn.Module):
     def __init__(
         self,
         num_modalities=3,
@@ -178,7 +178,7 @@ class InteractionMoE(nn.Module):
         num_layer_rw=2,
         temperature_rw=1,
     ):
-        super(InteractionMoE, self).__init__()
+        super(DiME, self).__init__()
         # num_branches = num_modalities + 1 + 1  # uni + syn + red
         num_branches = num_modalities + 1   # uni  + red
         self.num_modalities = num_modalities

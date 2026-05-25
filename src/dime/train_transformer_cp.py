@@ -1,6 +1,6 @@
 import os
 import sys
-# source scripts/train_scripts/imoe/transformer/run_mmcsd.sh
+#source scripts/train_scripts/dime/transformer/run_mmcsd.sh
 sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 
@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="os.fork()")
 
 from src.common.fusion_models.transformer import Transformer
-from src.imoe.imoe_train import train_and_evaluate_imoe
+from src.dime.dime_train import train_and_evaluate_dime
 from src.common.utils import setup_logger, str2bool
 
 import warnings
@@ -23,15 +23,13 @@ warnings.filterwarnings("ignore", message="`encoder_attention_mask` is deprecate
 from transformers import logging as hf_logging
 hf_logging.set_verbosity_error()
 
-
 # Parse input arguments
 def parse_args():
-    parser = argparse.ArgumentParser(description="Interaction-Transformer-MMCSD")
-
-    parser.add_argument("--data", type=str, default="mmcsd")
+    parser = argparse.ArgumentParser(description="Interaction-Transformer")
+    parser.add_argument("--data", type=str, default="adni")
     parser.add_argument(
-        "--modality", type=str, default="TS"
-    )  # T for text, S for screenshot/image in MMCSD
+        "--modality", type=str, default="IGCB"
+    )  # I G C B for ADNI, L N C for MIMIC
     parser.add_argument("--initial_filling", type=str, default="mean")  # None mean
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--seed", type=int, default=0)
@@ -47,10 +45,10 @@ def parse_args():
     )  # Use common ids across modalities
     parser.add_argument(
         "--save", type=str2bool, default=True
-    )
+    )  # Use common ids across modalities
     parser.add_argument(
         "--debug", type=str2bool, default=False
-    )
+    )  # Use common ids across modalities
 
     parser.add_argument("--train_epochs", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=8)
@@ -79,10 +77,10 @@ def parse_args():
     parser.add_argument("--num_heads", type=int, default=4)  # Number of heads
     parser.add_argument(
         "--patch", type=str2bool, default=True
-    )
+    )  # Use common ids across modalities
     parser.add_argument(
         "--num_patches", type=int, default=16
-    )
+    )  # Use common ids across modalities
     parser.add_argument("--original_target", type=str, default="RUS")  # Target label for classification
     parser.add_argument("--target", type=str, default="_CLIP_prompt_NoSyn_ZS")  # Target label for classification
     parser.add_argument(
@@ -95,32 +93,22 @@ def parse_args():
     parser.add_argument("--dropout", type=float, default=0.5)  # Number of Routers
     parser.add_argument("--gate_loss_weight", type=float, default=1e-2)
     parser.add_argument("--patience", type=int, default=10)
-    parser.add_argument(
-        "--text_emb_cache",
-        type=str,
-        default="/home/zbw/project/SILO-MM/I2MoE-main/data/mmcsd_text_DIS_FOXA.npy",
-        help="",
-    )
-
+    parser.add_argument("--text_emb_cache", type=str, default='/home/zbw/project/SILO-MM/I2MoE-main/data/mmcsd_text_DIS_FOXA.npy',help="")
+    
+    
     return parser.parse_known_args()
 
 
 def main():
     args, _ = parse_args()
-
-    # Force MMCSD only
-    args.data = "mmcsd"
-
     args.target = args.original_target + args.target
     print(args.target)
-
     logger = setup_logger(
-        f"./logs/imoe/transformer/{args.data}",
+        f"./logs/dime/transformer/{args.data}",
         f"{args.data}",
         f"{args.modality}_{args.target}.txt",
     )
-
-    seeds = np.arange(args.n_runs)
+    seeds = np.arange(args.n_runs)  # [0, 1, 2]
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
     log_summary = "======================================================================================\n"
@@ -151,17 +139,32 @@ def main():
 
     print("Modality:", args.modality)
 
-    # MMCSD is a 3-class stance classification task
-    n_labels = 3
+    data_to_nlabels = {
+        "adni": 3,
+        "mimic": 2,
+        "mmimdb": 23,
+        "enrico": 20,
+        "mosi": 2,
+        "mosi_regression": 1,
+        "mmcsd":3
+        ,
+    }
+    n_labels = data_to_nlabels[args.data]
     num_modalities = num_modality = len(args.modality)
 
-    val_accs = []
-    val_f1s = []
-    val_aucs = []
-    test_accs = []
-    test_f1s = []
-    test_f1_micros = []
-    test_aucs = []
+    if args.data == "mosi_regression":
+        val_losses = []
+        val_accs = []
+        test_accs = []
+        test_maes = []
+    else:
+        val_accs = []
+        val_f1s = []
+        val_aucs = []
+        test_accs = []
+        test_f1s = []
+        test_f1_micros = []
+        test_aucs = []
 
     ############ efficiency
     train_times = []
@@ -187,35 +190,51 @@ def main():
             args.gate,
         ).to(device)
 
-        (
-            val_acc,
-            val_f1,
-            val_auc,
-            test_acc,
-            test_f1,
-            test_f1_micro,
-            test_auc,
-            train_time,
-            infer_time,
-            flop,
-            param,
-        ) = train_and_evaluate_imoe(args, args.seed, fusion_model, "transformer")
+        if args.data == "mosi_regression":
+            (
+                val_loss,
+                val_acc,
+                test_acc,
+                test_mae,
+                train_time,
+                infer_time,
+                flop,
+                param,
+            ) = train_and_evaluate_dime(args, args.seed, fusion_model, "transformer")
+            val_losses.append(val_loss)
+            val_accs.append(val_acc)
+            test_accs.append(test_acc)
+            test_maes.append(test_mae)
 
-        val_accs.append(val_acc)
-        val_f1s.append(val_f1)
-        val_aucs.append(val_auc)
-        test_accs.append(test_acc)
-        test_f1s.append(test_f1)
-        test_f1_micros.append(test_f1_micro)
-        test_aucs.append(test_auc)
+        else:
 
+            (
+                val_acc,
+                val_f1,
+                val_auc,
+                test_acc,
+                test_f1,
+                test_f1_micro,
+                test_auc,
+                train_time,
+                infer_time,
+                flop,
+                param,
+            ) = train_and_evaluate_dime(args, args.seed, fusion_model, "transformer")
+
+            val_accs.append(val_acc)
+            val_f1s.append(val_f1)
+            val_aucs.append(val_auc)
+            test_accs.append(test_acc)
+            test_f1s.append(test_f1)
+            test_f1_micros.append(test_f1_micro)
+            test_aucs.append(test_auc)
         ############ efficiency
         train_times.append(train_time)
         infer_times.append(infer_time)
         flops.append(flop)
         params.append(param)
         ############ efficiency
-
     else:
         for seed in seeds:
             fusion_model = Transformer(
@@ -234,28 +253,47 @@ def main():
                 args.gate,
             ).to(device)
 
-            (
-                val_acc,
-                val_f1,
-                val_auc,
-                test_acc,
-                test_f1,
-                test_f1_micro,
-                test_auc,
-                train_time,
-                infer_time,
-                flop,
-                param,
-            ) = train_and_evaluate_imoe(args, seed, fusion_model, "transformer")
+            if args.data == "mosi_regression":
+                (
+                    val_loss,
+                    val_acc,
+                    test_acc,
+                    test_mae,
+                    train_time,
+                    infer_time,
+                    flop,
+                    param,
+                ) = train_and_evaluate_dime(
+                    args, args.seed, fusion_model, "transformer"
+                )
+                val_losses.append(val_loss)
+                val_accs.append(val_acc)
+                test_accs.append(test_acc)
+                test_maes.append(test_mae)
 
-            val_accs.append(val_acc)
-            val_f1s.append(val_f1)
-            val_aucs.append(val_auc)
-            test_accs.append(test_acc)
-            test_f1s.append(test_f1)
-            test_f1_micros.append(test_f1_micro)
-            test_aucs.append(test_auc)
+            else:
 
+                (
+                    val_acc,
+                    val_f1,
+                    val_auc,
+                    test_acc,
+                    test_f1,
+                    test_f1_micro,
+                    test_auc,
+                    train_time,
+                    infer_time,
+                    flop,
+                    param,
+                ) = train_and_evaluate_dime(args, seed, fusion_model, "transformer")
+
+                val_accs.append(val_acc)
+                val_f1s.append(val_f1)
+                val_aucs.append(val_auc)
+                test_accs.append(test_acc)
+                test_f1s.append(test_f1)
+                test_f1_micros.append(test_f1_micro)
+                test_aucs.append(test_auc)
             ############ efficiency
             train_times.append(train_time)
             infer_times.append(infer_time)
@@ -292,48 +330,68 @@ def main():
     log_summary += "\n"
     ############ efficiency
 
-    val_avg_acc = np.mean(val_accs) * 100
-    val_std_acc = np.std(val_accs) * 100
-    val_avg_f1 = np.mean(val_f1s) * 100
-    val_std_f1 = np.std(val_f1s) * 100
-    val_avg_auc = np.mean(val_aucs) * 100
-    val_std_auc = np.std(val_aucs) * 100
+    if args.data == "mosi_regression":
+        val_avg_acc = np.mean(val_accs) * 100
+        val_std_acc = np.std(val_accs) * 100
+        val_avg_loss = np.mean(val_losses)
+        val_std_loss = np.std(val_losses)
+        test_avg_acc = np.mean(test_accs) * 100
+        test_std_acc = np.std(test_accs) * 100
+        test_avg_mae = np.mean(test_maes) * 100
+        test_std_mae = np.std(test_maes) * 100
 
-    test_avg_acc = np.mean(test_accs) * 100
-    test_std_acc = np.std(test_accs) * 100
-    test_avg_f1 = np.mean(test_f1s) * 100
-    test_std_f1 = np.std(test_f1s) * 100
-    test_avg_f1_micro = np.mean(test_f1_micros) * 100
-    test_std_f1_micro = np.std(test_f1_micros) * 100
-    test_avg_auc = np.mean(test_aucs) * 100
-    test_std_auc = np.std(test_aucs) * 100
+        log_summary += f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} "
+        log_summary += f"[Val] Average Loss: {val_avg_loss:.2f} ± {val_std_loss:.2f} "
+        log_summary += (
+            f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f}  "
+        )
+        log_summary += (
+            f"[Test] Mean Absolute Error: {test_avg_mae:.2f} ± {test_std_mae:.2f}  "
+        )
 
-    log_summary += f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} "
-    log_summary += f"[Val] Average F1 Score: {val_avg_f1:.2f} ± {val_std_f1:.2f} "
-    log_summary += f"[Val] Average AUC: {val_avg_auc:.2f} ± {val_std_auc:.2f} / "
-    log_summary += (
-        f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f} "
-    )
-    log_summary += (
-        f"[Test] Average F1 (Macro) Score: {test_avg_f1:.2f} ± {test_std_f1:.2f} "
-    )
-    log_summary += (
-        f"[Test] Average F1 (Micro) Score: "
-        f"{test_avg_f1_micro:.2f} ± {test_std_f1_micro:.2f} "
-    )
-    log_summary += f"[Test] Average AUC: {test_avg_auc:.2f} ± {test_std_auc:.2f} "
+        print(model_kwargs)
+        print(
+            f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} / Average Loss: {val_avg_loss:.2f} ± {val_std_loss:.2f} "
+        )
+        print(f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f} ")
 
-    print(model_kwargs)
-    print(
-        f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} / "
-        f"Average F1 Score: {val_avg_f1:.2f} ± {val_std_f1:.2f} / "
-        f"Average AUC: {val_avg_auc:.2f} ± {val_std_auc:.2f}"
-    )
-    print(
-        f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f} / "
-        f"Average F1 Score: {test_avg_f1:.2f} ± {test_std_f1:.2f} / "
-        f"Average AUC: {test_avg_auc:.2f} ± {test_std_auc:.2f}"
-    )
+    else:
+
+        val_avg_acc = np.mean(val_accs) * 100
+        val_std_acc = np.std(val_accs) * 100
+        val_avg_f1 = np.mean(val_f1s) * 100
+        val_std_f1 = np.std(val_f1s) * 100
+        val_avg_auc = np.mean(val_aucs) * 100
+        val_std_auc = np.std(val_aucs) * 100
+
+        test_avg_acc = np.mean(test_accs) * 100
+        test_std_acc = np.std(test_accs) * 100
+        test_avg_f1 = np.mean(test_f1s) * 100
+        test_std_f1 = np.std(test_f1s) * 100
+        test_avg_f1_micro = np.mean(test_f1_micros) * 100
+        test_std_f1_micro = np.std(test_f1_micros) * 100
+        test_avg_auc = np.mean(test_aucs) * 100
+        test_std_auc = np.std(test_aucs) * 100
+
+        log_summary += f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} "
+        log_summary += f"[Val] Average F1 Score: {val_avg_f1:.2f} ± {val_std_f1:.2f} "
+        log_summary += f"[Val] Average AUC: {val_avg_auc:.2f} ± {val_std_auc:.2f} / "
+        log_summary += (
+            f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f} "
+        )
+        log_summary += (
+            f"[Test] Average F1 (Macro) Score: {test_avg_f1:.2f} ± {test_std_f1:.2f} "
+        )
+        log_summary += f"[Test] Average F1 (Micro) Score: {test_avg_f1_micro:.2f} ± {test_std_f1_micro:.2f} "
+        log_summary += f"[Test] Average AUC: {test_avg_auc:.2f} ± {test_std_auc:.2f} "
+
+        print(model_kwargs)
+        print(
+            f"[Val] Average Accuracy: {val_avg_acc:.2f} ± {val_std_acc:.2f} / Average F1 Score: {val_avg_f1:.2f} ± {val_std_f1:.2f} / Average AUC: {val_avg_auc:.2f} ± {val_std_auc:.2f}"
+        )
+        print(
+            f"[Test] Average Accuracy: {test_avg_acc:.2f} ± {test_std_acc:.2f} / Average F1 Score: {test_avg_f1:.2f} ± {test_std_f1:.2f} / Average AUC: {test_avg_auc:.2f} ± {test_std_auc:.2f}"
+        )
 
     logger.info(log_summary)
 
